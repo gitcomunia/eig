@@ -1,1 +1,90 @@
-<!DOCTYPE html><html><head><title>Inicio</title></head><body>Formulario inicial</body></html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Evaluación Inicial - ComunIA</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-5">
+  <h2 class="mb-4">Evaluación Inicial Gratuita</h2>
+
+  <!-- Formulario de entrada -->
+  <form id="consulta-form" class="mb-4">
+    <div class="mb-3">
+      <label for="ciudad" class="form-label">Ciudad / Municipio</label>
+      <input type="text" class="form-control" id="ciudad" name="ciudad" required>
+    </div>
+    <div class="mb-3">
+      <label for="provincia" class="form-label">Provincia / Región</label>
+      <input type="text" class="form-control" id="provincia" name="provincia" required>
+    </div>
+    <div class="mb-3">
+      <label for="pais" class="form-label">País</label>
+      <input type="text" class="form-control" id="pais" name="pais" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Buscar datos</button>
+  </form>
+
+  <!-- Ficha técnica editable -->
+  <form id="ficha-form" style="display:none;">
+    <h4 class="mb-3">Ficha técnica generada</h4>
+    <div id="ficha-container"></div>
+    <button type="submit" class="btn btn-success mt-3">Confirmar y Guardar</button>
+  </form>
+
+  <div id="mensaje-ok" class="alert alert-success mt-4 d-none">✅ Ficha guardada correctamente.</div>
+</div>
+
+<script>
+  document.getElementById('consulta-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const ciudad = document.getElementById('ciudad').value;
+    const provincia = document.getElementById('provincia').value;
+    const pais = document.getElementById('pais').value;
+
+    const response = await fetch('../src/ia_query.php', {
+      method: 'POST',
+      body: new URLSearchParams({ municipio: ciudad, region: provincia, pais: pais })
+    });
+
+    const ficha = await response.json();
+    const container = document.getElementById('ficha-container');
+    container.innerHTML = '';
+
+    for (const key in ficha) {
+      const value = ficha[key] ?? '';
+      container.innerHTML += `
+        <div class="mb-3">
+          <label class="form-label">${key}</label>
+          <input type="text" class="form-control" name="${key}" value="${value}">
+        </div>`;
+    }
+
+    document.getElementById('ficha-form').style.display = 'block';
+    document.getElementById('mensaje-ok').classList.add('d-none');
+  });
+
+  document.getElementById('ficha-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const inputs = document.querySelectorAll('#ficha-form input');
+    const data = {};
+
+    inputs.forEach(input => {
+      data[input.name] = input.value;
+    });
+
+    const response = await fetch('../src/procesar.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (response.ok) {
+      document.getElementById('mensaje-ok').classList.remove('d-none');
+    }
+  });
+</script>
+</body>
+</html>
