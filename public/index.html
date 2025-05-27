@@ -27,17 +27,29 @@
     <button type="submit" class="btn btn-primary">Buscar datos</button>
   </form>
 
-  <!-- Ficha técnica editable -->
+  <!-- Ficha técnica editable (parcial) -->
   <form id="ficha-form" style="display:none;">
-    <h4 class="mb-3">Ficha técnica generada</h4>
-    <div id="ficha-container"></div>
-    <button type="submit" class="btn btn-success mt-3">Confirmar y Guardar</button>
-  </form>
+    <h4 class="mb-3">Confirme los siguientes datos</h4>
+    <input type="hidden" name="nombre" id="nombre">
+    <input type="hidden" name="region" id="region">
+    <input type="hidden" name="pais" id="pais">
+    <input type="hidden" name="ficha_json" id="ficha_json">
 
-  <div id="mensaje-ok" class="alert alert-success mt-4 d-none">✅ Ficha guardada correctamente.</div>
+    <div class="mb-3">
+      <label class="form-label">Cantidad de Habitantes</label>
+      <input type="text" class="form-control" name="cantidad_habitantes" id="cantidad_habitantes">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Presupuesto Anual Aproximado</label>
+      <input type="text" class="form-control" name="presupuesto_anual_aprox" id="presupuesto_anual_aprox">
+    </div>
+    <button type="submit" class="btn btn-success mt-3">Confirmar y Continuar</button>
+  </form>
 </div>
 
 <script>
+  let fichaActual = {};
+
   document.getElementById('consulta-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const ciudad = document.getElementById('ciudad').value;
@@ -50,39 +62,32 @@
     });
 
     const ficha = await response.json();
-    const container = document.getElementById('ficha-container');
-    container.innerHTML = '';
+    fichaActual = ficha;
 
-    for (const key in ficha) {
-      const value = ficha[key] ?? '';
-      container.innerHTML += `
-        <div class="mb-3">
-          <label class="form-label">${key}</label>
-          <input type="text" class="form-control" name="${key}" value="${value}">
-        </div>`;
-    }
+    document.getElementById('nombre').value = ciudad;
+    document.getElementById('region').value = provincia;
+    document.getElementById('pais').value = pais;
+    document.getElementById('ficha_json').value = JSON.stringify(ficha);
+
+    document.getElementById('cantidad_habitantes').value = ficha['cantidad_habitantes'] || '';
+    document.getElementById('presupuesto_anual_aprox').value = ficha['presupuesto_anual_aprox'] || '';
 
     document.getElementById('ficha-form').style.display = 'block';
-    document.getElementById('mensaje-ok').classList.add('d-none');
   });
 
   document.getElementById('ficha-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const inputs = document.querySelectorAll('#ficha-form input');
-    const data = {};
-
-    inputs.forEach(input => {
-      data[input.name] = input.value;
-    });
+    const data = new FormData(e.target);
+    const plainData = Object.fromEntries(data.entries());
 
     const response = await fetch('../src/procesar.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(plainData)
     });
 
     if (response.ok) {
-      document.getElementById('mensaje-ok').classList.remove('d-none');
+      window.location.href = "fase2_autogestion.html";
     }
   });
 </script>
